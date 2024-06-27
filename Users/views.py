@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 import datetime 
 from django.conf import settings
 from .serializers import UserSerializer
+from .models import User
 import jwt
 from rest_framework.response import Response
 from rest_framework import status
@@ -37,6 +38,19 @@ class SignupView(APIView):
             token = generate_jwt_token(user)
             return Response({'token': token}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class LoginView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        try:
+            user = User.objects.get(email=email)
+            if user.password == password:
+                token = generate_jwt_token(user)
+                return Response({'token': token}, status=status.HTTP_200_OK)
+            return Response({'error': 'Invalid password'}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
 def generate_jwt_token(user):
     payload = {
