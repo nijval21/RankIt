@@ -1,6 +1,8 @@
 from django.shortcuts import render
+from rest_framework.views import APIView
 import datetime 
 from django.conf import settings
+from .serializers import UserSerializer
 import jwt
 from rest_framework.response import Response
 from rest_framework import status
@@ -26,6 +28,15 @@ def get_user_from_token(request):
         return Response({"error": "Invalid token format"}, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+    
+class SignupView(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            token = generate_jwt_token(user)
+            return Response({'token': token}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def generate_jwt_token(user):
     payload = {
