@@ -192,6 +192,32 @@ class NewsView(APIView):
         else:
         # Return error response if failed to retrieve the webpage
             return JsonResponse({'error': 'Failed to retrieve the webpage'}, status=500)
+        
+class TopBranchesYearWise(APIView):
+    def get(self, request):
+        year = request.query_params.get('year')
+        ModelClass = apps.get_model('users', 'josaa' + str(year))
+        try:
+            if year == '2016' or year=='2017':
+                gender = 'NA'
+            else:
+                gender = 'Gender-Neutral'
+            results = ModelClass.objects.filter(
+            seat_type='OPEN', gender=gender
+            ).annotate(
+                open_rank_int=Cast('open_rank', FloatField()),
+                close_rank_int=Cast('close_rank', FloatField())
+            ).annotate(
+            avg_rank=ExpressionWrapper((F('open_rank_int') + F('close_rank_int')) / 2, output_field=FloatField())
+            ).values('academic_program').annotate(
+                avg_of_avg_rank=Avg('avg_rank'),
+                institute_count=Count('institute_name')
+            ).order_by('avg_of_avg_rank')
+            # results3 = results.values()
+            results_data = list(results)
+            return JsonResponse(results_data, safe=False)
+        except Exception as e:
+            return HttpResponse(f'An error occurred: {e}', status=500)
 
 def generate_jwt_token(user):
     payload = {
