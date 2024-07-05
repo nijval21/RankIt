@@ -218,6 +218,40 @@ class TopBranchesYearWise(APIView):
             return JsonResponse(results_data, safe=False)
         except Exception as e:
             return HttpResponse(f'An error occurred: {e}', status=500)
+        
+class YearlyTrend(APIView):
+    def get(self, request):
+
+        institute = request.query_params.get('institute')
+        category = request.query_params.get('category')     
+        branch = request.query_params.get('branch')
+        # gender = request.query_params.get('gender')
+        yearly_trends = []
+        try:
+            for i in range(2016, 2024):
+                ModelClass = apps.get_model('users', 'josaa' + str(i))
+                if i==2016 or i==2017:
+                    gender = 'NA'
+                else:
+                    gender = 'Gender-Neutral'
+                # print(f'Querying model: josaa{i}')
+                results = ModelClass.objects.filter(
+                        seat_type = category,
+                        academic_program = branch,
+                        gender = gender,
+                        institute_name = institute
+                    ).values('close_rank', 'open_rank')
+                # print(f'Raw query: {results.query}')
+                # print(results)
+                open_data = list(results.values('open_rank'))
+                close_data = list(results.values('close_rank'))
+                if len(open_data)>0 :
+                    year_data = {'year':i, 'close_rank':close_data[0], 'open_rank':open_data[0]}
+                    yearly_trends.append(year_data)
+                print(yearly_trends)
+            return JsonResponse(yearly_trends, safe=False)
+        except Exception as e:
+            return HttpResponse(f'An error occurred: {e}', status=500)
 
 def generate_jwt_token(user):
     payload = {
