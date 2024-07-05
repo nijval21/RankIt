@@ -1,17 +1,37 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-import datetime 
-from django.conf import settings
-from .serializers import UserSerializer
-from .models import User
-import jwt
 from rest_framework.response import Response
 from rest_framework import status
+from django.contrib.auth import authenticate
+from .models import User
+from .serializers import UserSerializer
+import jwt
+from django.conf import settings
+import datetime 
 from django.http import JsonResponse
 import requests
 from bs4 import BeautifulSoup
+from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse
+# import sqlite3
+from .models import josaa2023, josaa2022, josaa2021, josaa2020, josaa2019, josaa2018, josaa2017, josaa2016
+from django.db.models import Avg, F, IntegerField, ExpressionWrapper, FloatField, Count
+from django.db.models.functions import Cast
 from django.apps import apps
+
+
+from selenium.webdriver.support.ui import Select
+import requests
+import re
+import os
+# from datetime import datetime
+from time import sleep
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 # Create your views here.
 
 
@@ -71,6 +91,57 @@ class CRLAvailInstiView(APIView):
                 results = ModelClass.objects.filter(close_rank__gte=crl, seat_type='OPEN').order_by('open_rank')
             else :
                 results = ModelClass.objects.filter(close_rank__gte=crl, academic_program = branch, seat_type='OPEN').order_by('open_rank')
+            results_data = list(results.values())
+            if len(results_data)==0:
+                return Response({'message': 'Sorry no institutes are available for this rank and branch.'}, status=404)
+            return JsonResponse(results_data, safe=False)
+            
+        except ModelClass.DoesNotExist:
+            return Response({'error': 'Sorry no institutes are available for this rank and branch.'}, status=404)
+        except Exception as e:
+            return HttpResponse(f'An error occurred: {e}', status=500)
+        
+class CatAvailInstiView(APIView):
+    def get(self, request):
+        user_id = get_user_from_token(request)
+        if isinstance(user_id, Response):  
+            return user_id
+        year = request.query_params.get('year')
+        category = request.query_params.get('category')
+        cat_rank = request.query_params.get('category_rank')
+        branch = request.query_params.get('branch')
+        ModelClass = apps.get_model('users', 'josaa' + str(year))
+        try:
+            if branch == 'ALL':
+                if category == 'ALL':
+                    results = ModelClass.objects.annotate(
+                        close_rank_int=Cast('close_rank', IntegerField())
+                    ).filter(
+                        close_rank_int__gte=cat_rank
+                    ).order_by('open_rank')
+                else:
+                    results = ModelClass.objects.annotate(
+                        close_rank_int=Cast('close_rank', IntegerField())
+                    ).filter(
+                        close_rank_int__gte=cat_rank,
+                        seat_type=category
+                    ).order_by('open_rank')
+            else:
+                if category == 'ALL':
+                    results = ModelClass.objects.annotate(
+                        close_rank_int=Cast('close_rank', IntegerField())
+                    ).filter(
+                        close_rank_int__gte=cat_rank,
+                        academic_program=branch
+                    ).order_by('open_rank')
+                else:
+                    results = ModelClass.objects.annotate(
+                        close_rank_int=Cast('close_rank', IntegerField())
+                    ).filter(
+                        close_rank_int__gte=cat_rank,
+                        seat_type=category,
+                        academic_program=branch
+                    ).order_by('open_rank')
             results_data = list(results.values())
             if len(results_data)==0:
                 return Response({'message': 'Sorry no institutes are available for this rank and branch.'}, status=404)
