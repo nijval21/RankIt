@@ -252,6 +252,15 @@ class YearlyTrend(APIView):
             return JsonResponse(yearly_trends, safe=False)
         except Exception as e:
             return HttpResponse(f'An error occurred: {e}', status=500)
+        
+class Branches(APIView):
+    def get(self, request):
+        try:
+            result = josaa2023.objects.values('academic_program').distinct()
+            results_data = list(result)
+            return JsonResponse(results_data, safe=False)
+        except Exception as e:
+            return HttpResponse(f'An error occured: {e}', status=500)
 
 def generate_jwt_token(user):
     payload = {
