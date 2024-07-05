@@ -10,6 +10,8 @@ from rest_framework import status
 from django.http import JsonResponse
 import requests
 from bs4 import BeautifulSoup
+from django.http import HttpResponse
+from django.apps import apps
 # Create your views here.
 
 
@@ -54,6 +56,30 @@ class LoginView(APIView):
             return Response({'error': 'Invalid password'}, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
             return Response({'error': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        
+class CRLAvailInstiView(APIView):
+    def get(self, request):
+        user_id = get_user_from_token(request)
+        if isinstance(user_id, Response):  
+            return user_id
+        year = request.query_params.get('year')
+        crl = request.query_params.get('crl')
+        branch = request.query_params.get('branch')
+        ModelClass = apps.get_model('users', 'josaa' + str(year))
+        try:
+            if branch=='All':
+                results = ModelClass.objects.filter(close_rank__gte=crl, seat_type='OPEN').order_by('open_rank')
+            else :
+                results = ModelClass.objects.filter(close_rank__gte=crl, academic_program = branch, seat_type='OPEN').order_by('open_rank')
+            results_data = list(results.values())
+            if len(results_data)==0:
+                return Response({'message': 'Sorry no institutes are available for this rank and branch.'}, status=404)
+            return JsonResponse(results_data, safe=False)
+            
+        except ModelClass.DoesNotExist:
+            return Response({'error': 'Sorry no institutes are available for this rank and branch.'}, status=404)
+        except Exception as e:
+            return HttpResponse(f'An error occurred: {e}', status=500)
         
 class NewsView(APIView):
     def get(self, request):
