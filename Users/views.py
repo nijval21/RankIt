@@ -35,6 +35,181 @@ from selenium.webdriver.common.keys import Keys
 # Create your views here.
 
 
+
+def is_superuser(user):
+    return user.is_superuser
+
+@user_passes_test(is_superuser)
+def admin_only_view(request):
+    # Initialize the Chrome driver using WebDriver Manager
+    chrome_options = Options()
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('ignore-certificate-errors')
+
+    driver = webdriver.Chrome(options=chrome_options)
+
+    # Set up Chrome options
+    chrome_options = webdriver.ChromeOptions()
+
+    # Navigate to the website
+    for i in range(1, 9):
+        # ModelClass = 'josaa'
+        year ='select'
+        if i==1:
+            year = '2023'
+            ModelClass = josaa2023
+        elif i==2:
+            year = '2022'    
+            ModelClass = josaa2022
+        elif i==3:
+            year = '2021'    
+            ModelClass = josaa2021
+        elif i==4:
+            year = '2020'   
+            ModelClass = josaa2020
+        elif i==5:
+            year = '2019'    
+            ModelClass = josaa2019
+        elif i==6:
+            year = '2018'    
+            ModelClass = josaa2018
+        elif i==7: 
+            year = '2017'    
+            ModelClass = josaa2017
+        elif i==8:
+            year = '2016'  
+            ModelClass = josaa2016  
+        # table_name = f'seat{year}'
+        # cursor.execute(f'''
+        # CREATE TABLE IF NOT EXISTS {table_name} (
+        #     round_no TEXT,
+        #     institute_type TEXT,
+        #     institute_name TEXT,
+        #     academic_program TEXT,
+        #     seat_type TEXT,
+        #     gender TEXT,
+        #     open_rank TEXT,
+        #     close_rank TEXTS
+        # )''')
+        driver.get('https://josaa.admissions.nic.in/applicant/seatmatrix/openingclosingrankarchieve.aspx')
+
+        # Wait for the dropdowns to be available and interact with them
+        wait = WebDriverWait(driver, 5)
+
+        # Select the year
+        year_dropdown_wait = wait.until(EC.visibility_of_element_located((By.ID, 'ctl00_ContentPlaceHolder1_ddlYear_chosen')))
+        year_dropdown_parent = year_dropdown_wait.find_element(By.XPATH, '..')
+        year_dropdown_parent.click()
+        year_dropdown_search = year_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-search')
+        year_dropdown_options = year_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-results')
+        year_dropdown_options.find_elements(By.TAG_NAME, 'li')[i].click()
+
+        sleep(2)
+        # for j in range()
+        # Select the round number
+        round_dropdown_wait = wait.until(EC.visibility_of_element_located((By.ID, 'ctl00_ContentPlaceHolder1_ddlroundno_chosen')))
+        round_dropdown_parent = round_dropdown_wait.find_element(By.XPATH, '..')
+        round_dropdown_parent.click()
+        round_dropdown_search = round_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-search')
+        round_dropdown_options = round_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-results')
+
+        round_dropdown_options.find_elements(By.TAG_NAME, 'li')[6].click()
+
+        sleep(2)
+
+        # Select the institute type
+        institute_type_dropdown_wait = wait.until(EC.visibility_of_element_located((By.ID, 'ctl00_ContentPlaceHolder1_ddlInstype_chosen')))
+        institute_type_dropdown_parent = institute_type_dropdown_wait.find_element(By.XPATH, '..')
+        institute_type_dropdown_parent.click()
+        institute_type_dropdown_search = institute_type_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-search')
+        institute_name_dropdown_options = institute_type_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-results')
+
+        institute_name_dropdown_options.find_elements(By.TAG_NAME, 'li')[3].click()
+
+        sleep(2)
+
+        # Select the institute name
+        institute_name_dropdown_wait = wait.until(EC.visibility_of_element_located((By.ID, 'ctl00_ContentPlaceHolder1_ddlInstitute_chosen')))
+        institute_name_dropdown_parent = institute_name_dropdown_wait.find_element(By.XPATH, '..')
+        institute_name_dropdown_parent.click()
+        institute_name_dropdown_search = institute_name_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-search')
+        institute_name_dropdown_options = institute_name_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-results')
+
+        institute_name_dropdown_options.find_elements(By.TAG_NAME, 'li')[1].click()
+
+        sleep(2)
+
+        # Select the academic program
+        academic_program_dropdown_wait = wait.until(EC.visibility_of_element_located((By.ID, 'ctl00_ContentPlaceHolder1_ddlBranch_chosen')))
+        academic_program_dropdown_parent = academic_program_dropdown_wait.find_element(By.XPATH, '..')
+        academic_program_dropdown_parent.click()
+        academic_program_dropdown_search = academic_program_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-search')
+        academic_program_dropdown_options = academic_program_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-results')
+
+        academic_program_dropdown_options.find_elements(By.TAG_NAME, 'li')[1].click()
+
+        sleep(2)
+
+        # Select the seat type/category
+        seat_type_dropdown_wait = wait.until(EC.visibility_of_element_located((By.ID, 'ctl00_ContentPlaceHolder1_ddlSeatType_chosen')))
+        seat_type_dropdown_parent = seat_type_dropdown_wait.find_element(By.XPATH, '..')
+        seat_type_dropdown_parent.click()
+        seat_type_dropdown_search = seat_type_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-search')
+        seat_type_dropdown_options = seat_type_dropdown_wait.find_element(By.CLASS_NAME, 'chosen-results')
+
+        seat_type_dropdown_options.find_elements(By.TAG_NAME, 'li')[1].click()
+
+        sleep(2)
+
+        # Submit the form
+        submit_button = wait.until(EC.element_to_be_clickable((By.ID, 'ctl00_ContentPlaceHolder1_btnSubmit')))
+        submit_button.click()
+
+        print("GOT THE TABLE!")
+        sleep(5)
+
+        # Wait for the results to be displayed and print the page source
+        wait.until(EC.presence_of_element_located((By.ID, 'ctl00_ContentPlaceHolder1_GridView1')))
+
+        # Print the page source or parse it with BeautifulSoup
+        page_source = driver.page_source
+
+        # Close the browser
+
+        # Parse the page source with BeautifulSoup
+        soup = BeautifulSoup(page_source, 'html.parser')
+
+        # Find the desired table or data
+        table = soup.find('table', {'id': 'ctl00_ContentPlaceHolder1_GridView1'})
+        rows = table.find_all('tr')[1:]
+        # round_no = '6'
+        # institute_type = 'Indian Institute of Technology'
+        for row in rows:
+            cols = row.find_all('td')
+            institute_name = cols[0].text.strip()
+            academic_program = cols[1].text.strip()
+            seat_type = cols[3].text.strip()
+            gender = cols[4].text.strip()
+            open_rank = cols[5].text.strip()
+            close_rank = cols[6].text.strip()
+
+            model_instance = ModelClass(
+                round_no='6',  # Assuming round number is constant for this example
+                institute_type='Indian Institute of Technology',  # Adjust as per your requirement
+                institute_name=institute_name,
+                academic_program=academic_program,
+                seat_type=seat_type,
+                gender=gender,
+                open_rank=open_rank,
+                close_rank=close_rank
+            )
+            model_instance.save()
+        # print(table.prettify())
+        sleep(5)
+
+    driver.quit()
+    return HttpResponse("This view is only accessible by admins.")
+
 def get_user_from_token(request):
     authorization_header = request.META.get('HTTP_AUTHORIZATION')
     if not authorization_header:
